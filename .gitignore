@@ -78,6 +78,10 @@ target/
 # Jupyter Notebook
 .ipynb_checkpoints
 
+# Local EEG exports and macOS metadata
+*.fif
+.DS_Store
+
 # IPython
 profile_default/
 ipython_config.py
