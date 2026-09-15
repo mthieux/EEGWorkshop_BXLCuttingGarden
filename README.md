@@ -1,8 +1,9 @@
 # EEGWorkshop_BXLCuttingGarden
 BXL Cutting Garden 2026 - Workshop
+Guillaume Pech & Marine Thieux (CRCN / ULB)
 
 ## Introduction to EEG
-Two-day hands-on workshop introducing the fundamentals of electroencephalography (EEG), from acquisition and preprocessing to basic analysis and visualization.
+A two-day hands-on workshop introducing the fundamentals of electroencephalography (EEG), from acquisition and preprocessing to basic analysis and visualization.
 
 ## Objectives
 - Understand the basic principles of EEG
@@ -12,6 +13,8 @@ Two-day hands-on workshop introducing the fundamentals of electroencephalography
 - Perform standard preprocessing
 - Extract and visualize EEG features
 - Perform standard time- and frequency-domain analyses
+- Get familiar with source reconstruction and source-level analysis
+- Get an introduction to EEG decoding
 
 ## Program
 **Day 1 — From EEG to clean data**  
@@ -32,5 +35,14 @@ S7 & S8 — Signal processing
 *Decoding*     
 *Other cool stuff*
 
-      
+## Getting started
+Follow the `installation guide` for VS Code & Anaconda (python)
+
+## Resources
+- [MNE tutorials](https://mne.tools/stable/auto_tutorials/index.html)
+- [EEG101 Library](https://www.eeg101.eu/library/)
+- [COGNESTIC Resources](https://imaging.mrc-cbu.cam.ac.uk/methods/COGNESTIC2026) 
+
+## Acknowledgments    
+This workshop makes use of the open-source tools developed by the MNE-Python community and other contributors to the scientific Python ecosystem, as well as teaching materials from COGNESTIC. Special thanks to Olaf Hauk and Jules Granget for sharing their teaching materials.  
   
