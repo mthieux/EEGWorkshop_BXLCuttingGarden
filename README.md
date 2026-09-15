@@ -1,5 +1,5 @@
 # EEGWorkshop_BXLCuttingGarden
-BXL Cutting Garden 2026 - Workshop
+BXL Cutting Garden 2026 - Workshop   
 Guillaume Pech & Marine Thieux (CRCN / ULB)
 
 ## Introduction to EEG
