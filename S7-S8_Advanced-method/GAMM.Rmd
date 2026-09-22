@@ -1,40 +1,35 @@
 ---
 title: "BXLCuttingGarden - Workshop: ERP-GAMM"
-author: "Marine Thieux"
-date: "2026-09-16"
-output: html_document
+date: "2026-09-22"
 ---
 
-This workshop provides an introduction to generalized additive mixed models (GAMMs) for ERP data. The goal is to move from classical time-point based ERP analyses toward a continuous model of the waveform, while accounting for within-subject variability and temporal autocorrelation.
+This workshop provides an introduction to generalized additive mixed models (GAMMs) for ERP data. 
+The goal is to move from classical time-point based ERP analyses toward a continuous model of the waveform, 
+while accounting for within-subject variability and temporal autocorrelation.
 
 Useful references:
-
 -   <https://noamross.github.io/gams-in-r-course/>
-
 -   <https://neuropsychology.github.io/NeuroKit/studies/erp_gam.html>
-
 -   <https://m-clark.github.io/generalized-additive-models/>
-
 -   <https://www.taylorfrancis.com/books/mono/10.1201/9781315370279/generalized-additive-models-simon-wood>
 
 **Why Generalized Additive (Mixed) Models - GAMM?**
-
-GAMMs extend generalized linear models by allowing nonlinear relationships between variables. In ERP research, this is useful because the waveform is rarely linear over time: the signal may rise, peak, and return to baseline in a way that cannot be captured well by a single slope or a few predefined contrasts.
+GAMMs extend generalized linear models by allowing nonlinear relationships between variables. 
+In ERP research, this is useful because the waveform is rarely linear over time: the signal may rise, 
+peak, and return to baseline in a way that cannot be captured well by a single slope or a few predefined contrasts.
 
 Compared with classical ERP analyses, GAMMs can:
-
 -   account for temporal autocorrelation between nearby time points;
-
 -   model smooth temporal trajectories instead of only a handful of time windows;
-
 -   incorporate subject-level variability through random smooths;
-
 -   reduce the need for multiple comparison corrections by using penalized smooths.
 
-GAMMs are especially helpful when we want to ask not only *"Is there a difference at 200 ms?"* but also *"How does the whole ERP trajectory differ between conditions?"*
+GAMMs are especially helpful when we want to ask not only *"Is there a difference at 200 ms?"* but also 
+*"How does the whole ERP trajectory differ between conditions?"*
 
-Instead of testing one time point at a time, we model the entire waveform as a smooth function of time, while accounting for repeated measures and subject variability.
-This is the core idea behind GAMM-based ERP analysis: it preserves the temporal structure of the signal, handles non-linearity, and respects the repeated-measures nature of the data.
+Instead of testing one time point at a time, we model the entire waveform as a smooth function of time, 
+while accounting for repeated measures and subject variability. This is the core idea behind GAMM-based ERP analysis:
+it preserves the temporal structure of the signal, handles non-linearity, and respects the repeated-measures nature of the data.
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -56,7 +51,7 @@ library(modelbased) # extract summaries of model predictions
 ```{r}
 # Read the ERP dataset (preprocessed ERP)
 
-data <- read.csv("/Users/marinethieux/Desktop/EEG_CLEAN/simulated_ERP_GAMM_workshop.csv") %>%
+data <- read.csv("~/simulated_ERP_GAMM_workshop.csv") %>%
   mutate(
     subject = as.factor(subject),
     condition = as.factor(condition),
@@ -75,7 +70,6 @@ data <- read.csv("/Users/marinethieux/Desktop/EEG_CLEAN/simulated_ERP_GAMM_works
 
 ```{r}
 # Quick data checks (data structure/ balance of conditions).
-
 data %>% summarise(
   participants = n_distinct(subject),
   channels = n_distinct(channel),
@@ -86,7 +80,6 @@ table(data$condition)
 ```
 
 # Classical ERP
-
 ```{r}
 # Plot ERP averages by condition and channel
 data %>%
@@ -101,15 +94,10 @@ data %>%
 ```
 
 This first descriptive plot raises several questions:
-
 -   Is there a difference between conditions?
-
 -   If yes, when does it occur in time?
-
 -   Does the shape of the response differ across conditions?
-
 -   Is the effect consistent across electrodes?
-
 -   How much of the observed difference is due to between-subject variability?
 
 ### Grand average
@@ -137,7 +125,8 @@ data %>%
   ggtitle("Grand average - all channels")
 ```
 
-At this point, we might ask whether the amplitude differs between conditions at 100 ms, 230 ms, or another specific time point. But this is still a classical approach: it averages over trials, channels, and participants, and it relies on predefined timepoints.
+At this point, we might ask whether the amplitude differs between conditions at 100 ms, 230 ms, or another specific time point. 
+But this is still a classical approach: it averages over trials, channels, and participants, and it relies on predefined timepoints.
 
 ```{r}
 # Visualize the ERP by condition and electrode
@@ -157,7 +146,9 @@ data %>%
   theme_classic()
 ```
 
-The next question is: can we model the complete waveform as a smooth function of time, instead of testing a small set of selected time windows? To do that, we cannot use a simple linear effect. A spline introduces enough flexibility to represent a curved trajectory and estimate its shape from the data.
+The next question is: can we model the complete waveform as a smooth function of time, 
+instead of testing a small set of selected time windows? To do that, we cannot use a simple linear effect. 
+A spline introduces enough flexibility to represent a curved trajectory and estimate its shape from the data.
 
 ## Spline regression
 
@@ -181,7 +172,6 @@ summary(model_spline)
 
 ```{r}
 # Create predictions from the spline model across a grid of time points
-
 # We create a regular sequence of time values spanning the observed period.
 # For each time point, the model predicts the expected ERP amplitude for each condition. 
 # This allows a smooth trajectory to be displayed.
@@ -211,13 +201,17 @@ ggplot(spline_grid, aes(x = time_ms, y = prediction, colour = condition)) +
   theme_classic()
 ```
 
-We have moved from asking whether conditions differ at predefined time points to asking whether their ERP trajectories differ continuously over time. A GAM extends this idea by estimating smooth functions directly from the data, instead of forcing an *a priori* shape.
+We have moved from asking whether conditions differ at predefined time points to asking whether their ERP trajectories 
+differ continuously over time. A GAM extends this idea by estimating smooth functions directly from the data, 
+instead of forcing an *a priori* shape.
 
 ## GAMM
 
-The GAMM is fitted to EEG data from -200 to 800 ms around stimulus onset, with ERP amplitude in O1 as the outcome variable. The main predictor is condition.
-
-The term `s(time_ms, by = condition)` models the temporal trajectory separately for each condition. This is the key idea: each condition can have its own smooth shape over time. A penalty is then applied to control the wiggliness of the smooth, thereby avoiding overfitting while still allowing flexible curves.
+The GAMM is fitted to EEG data from -200 to 800 ms around stimulus onset, with ERP amplitude in O1 as the outcome variable. 
+The main predictor is condition.
+The term `s(time_ms, by = condition)` models the temporal trajectory separately for each condition. 
+This is the key idea: each condition can have its own smooth shape over time. 
+A penalty is then applied to control the wiggliness of the smooth, thereby avoiding overfitting while still allowing flexible curves.
 
 ```{r}
 # First GAM: time-varying effect of condition without random smooths
@@ -254,10 +248,10 @@ plot(ggemmeans(model, terms = c("time_ms", "condition")))
 ```
 
 Individual deviations from the group-level pattern are introduced using a random smooth of time by subject.
-
-This is useful because participants often differ not only in overall amplitude but also in the timing and shape of their ERP responses. Random smooths allow each subject to have their own trajectory while still estimating the shared group effect.
-
-To handle possible outliers and non-normality, the model can use a scaled t distribution. Temporal autocorrelation can also be modeled with an AR(1) structure, which is important because adjacent time points in an ERP waveform are not independent.
+This is useful because participants often differ not only in overall amplitude but also in the timing and shape of their ERP responses.
+Random smooths allow each subject to have their own trajectory while still estimating the shared group effect.
+To handle possible outliers and non-normality, the model can use a scaled t distribution. 
+Temporal autocorrelation can also be modeled with an AR(1) structure, which is important because adjacent time points in an ERP waveform are not independent.
 
 ```{r}
 # GAMM with subject-level random smooths and AR(1) structure
@@ -317,7 +311,9 @@ model.gamm.02 <- mgcv::bam(
 )
 ```
 
-We compare the two models (with and without the condition-specific smooth). Model selection is based on statistical comparison of fit and complexity, rather than only on raw significance at chosen timepoints.
+We compare the two models (with and without the condition-specific smooth). 
+Model selection is based on statistical comparison of fit and complexity, 
+rather than only on raw significance at chosen timepoints.
 
 ```{r}
 #  Model comparison
@@ -382,18 +378,21 @@ plot_diff(
   sim.ci = TRUE)
 ```
 
-We estimate the difference between conditions continuously across time. At each time point, the model yields an uncertainty interval around the difference. When the simultaneous 95% interval no longer overlaps zero, we interpret this as evidence for a difference in the ERP trajectory during that period. This is a more principled way to summarize continuous time-series effects than testing isolated time bins.
+We estimate the difference between conditions continuously across time. 
+At each time point, the model yields an uncertainty interval around the difference. 
+When the simultaneous 95% interval no longer overlaps zero, we interpret this as evidence for a difference in the ERP trajectory 
+during that period. This is a more principled way to summarize continuous time-series effects than testing isolated time bins.
 
 ```{r}
 # Pairwise contrasts at selected time points
 
-# This bridges the GAMM approach to the more familiar classical ERP contrast interpretation: we can estimate condition differences at several times and inspect the contrasts.
+# This bridges the GAMM approach to the more familiar classical ERP contrast interpretation: 
+we can estimate condition differences at several times and inspect the contrasts.
 
 emm <- emmeans(
   model.gamm,
   ~ condition | time_ms,
-  at = list(time_ms = seq(from = 0.1, to = 0.8, by = 0.05))
-)
+  at = list(time_ms = seq(from = 0.1, to = 0.8, by = 0.05)))
 
 pairs(emm) %>%
   as.data.frame() %>%
